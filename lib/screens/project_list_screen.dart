@@ -37,7 +37,9 @@ class ProjectsScreen extends ConsumerWidget {
     final asyncProjects = ref.watch(projectListProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Projects')),
+      appBar: AppBar(
+        title: const Text('Projects'),
+      ),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showProjectSheet(context, ref),
         child: const Icon(Icons.add),

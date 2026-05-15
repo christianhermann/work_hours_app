@@ -65,11 +65,19 @@ class SettingsScreen extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final isDark = ref.watch(isDarkModeProvider);
+    final themeMode = ref.watch(themeProvider);
     final db = ref.watch(databaseProvider);
 
     return Scaffold(
-      appBar: AppBar(title: const Text('Settings')),
+      appBar: AppBar(
+        title: const Text('Settings'),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.brightness_4_outlined),
+            onPressed: () => ref.read(themeProvider.notifier).toggle(),
+          ),
+        ],
+      ),
       body: ListView(
         children: [
           // ── Export CSV ──────────────────────────────────────────
@@ -91,9 +99,9 @@ class SettingsScreen extends ConsumerWidget {
             leading: const Icon(Icons.dark_mode),
             title: const Text('Dark Mode'),
             trailing: Switch(
-              value: isDark,
+              value: themeMode == ThemeMode.dark,
               onChanged: (val) =>
-                  ref.read(isDarkModeProvider.notifier).state = val,
+                  ref.read(themeProvider.notifier).toggle(),
             ),
           ),
           const Divider(),
