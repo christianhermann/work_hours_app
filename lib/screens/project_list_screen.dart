@@ -10,23 +10,22 @@ import '../providers/database_provider.dart';
 // ─── Helper: per-project stats fetched from timeEntryDao ─────────────────────
 
 final _projectStatsProvider =
-    FutureProvider.family<({int entryCount, double totalHours}), int>(
-  (ref, projectId) async {
+    StreamProvider.family<({int entryCount, double totalHours}), int>(
+  (ref, projectId) {
     final db = ref.watch(databaseProvider);
-    final entries =
-        await db.timeEntryDao.getEntriesForProject(projectId);
-    final completed = entries.where((e) => e.endTime != null).toList();
-    double totalMs = 0;
-    for (final e in completed) {
-      totalMs += (e.endTime! - e.startTime).toDouble();
-    }
-    return (
-      entryCount: completed.length,
-      totalHours: totalMs / (1000 * 60 * 60),
-    );
+    return db.timeEntryDao.watchEntriesForProject(projectId).map((entries) {
+      final completed = entries.where((e) => e.endTime != null).toList();
+      double totalMs = 0;
+      for (final e in completed) {
+        totalMs += (e.endTime! - e.startTime).toDouble();
+      }
+      return (
+        entryCount: completed.length,
+        totalHours: totalMs / (1000 * 60 * 60),
+      );
+    });
   },
 );
-
 // ─── Screen ───────────────────────────────────────────────────────────────────
 
 class ProjectsScreen extends ConsumerWidget {
@@ -37,9 +36,7 @@ class ProjectsScreen extends ConsumerWidget {
     final asyncProjects = ref.watch(projectListProvider);
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Projects'),
-      ),
+      appBar: AppBar(title: const Text('Projects')),
       floatingActionButton: FloatingActionButton(
         onPressed: () => _showProjectSheet(context, ref),
         child: const Icon(Icons.add),
@@ -48,9 +45,7 @@ class ProjectsScreen extends ConsumerWidget {
         loading: () => const Center(child: CircularProgressIndicator()),
         error: (e, _) => Center(child: Text('Error: $e')),
         data: (projects) => projects.isEmpty
-            ? const Center(
-                child: Text('No projects yet. Tap + to add one.'),
-              )
+            ? const Center(child: Text('No projects yet. Tap + to add one.'))
             : ListView.builder(
                 padding: const EdgeInsets.all(16),
                 itemCount: projects.length,
@@ -87,16 +82,20 @@ class _ProjectCard extends ConsumerWidget {
           ),
           alignment: Alignment.centerRight,
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Icon(Icons.delete,
-              color: Theme.of(context).colorScheme.onError),
+          child: Icon(
+            Icons.delete,
+            color: Theme.of(context).colorScheme.onError,
+          ),
         ),
         confirmDismiss: (_) => _confirmDelete(context, project.name),
         onDismissed: (_) =>
             ref.read(projectListProvider.notifier).deleteProject(project.id),
         child: Card(
           child: ListTile(
-            contentPadding:
-                const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 10,
+            ),
             leading: CircleAvatar(
               backgroundColor: projectColor,
               child: Text(
@@ -123,11 +122,9 @@ class _ProjectCard extends ConsumerWidget {
                     hourlyRate: project.hourlyRate,
                   ),
                   style: TextStyle(
-                    color: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.color
-                        ?.withValues(alpha: 0.65),
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodyMedium?.color?.withValues(alpha: 0.65),
                   ),
                 ),
               ),
@@ -187,11 +184,20 @@ class _ProjectEditorSheet extends ConsumerStatefulWidget {
 
 class _ProjectEditorSheetState extends ConsumerState<_ProjectEditorSheet> {
   static const _presetColors = <Color>[
-    Color(0xFFEF5350), Color(0xFFEC407A), Color(0xFFAB47BC),
-    Color(0xFF7E57C2), Color(0xFF5C6BC0), Color(0xFF42A5F5),
-    Color(0xFF29B6F6), Color(0xFF26C6DA), Color(0xFF26A69A),
-    Color(0xFF66BB6A), Color(0xFFFFCA28), Color(0xFFFFA726),
-    Color(0xFFFF7043), Color(0xFF8D6E63),
+    Color(0xFFEF5350),
+    Color(0xFFEC407A),
+    Color(0xFFAB47BC),
+    Color(0xFF7E57C2),
+    Color(0xFF5C6BC0),
+    Color(0xFF42A5F5),
+    Color(0xFF29B6F6),
+    Color(0xFF26C6DA),
+    Color(0xFF26A69A),
+    Color(0xFF66BB6A),
+    Color(0xFFFFCA28),
+    Color(0xFFFFA726),
+    Color(0xFFFF7043),
+    Color(0xFF8D6E63),
   ];
 
   late final TextEditingController _nameCtrl;
@@ -206,9 +212,7 @@ class _ProjectEditorSheetState extends ConsumerState<_ProjectEditorSheet> {
     super.initState();
     final p = widget.project;
     _nameCtrl = TextEditingController(text: p?.name ?? '');
-    _rateCtrl = TextEditingController(
-      text: p?.hourlyRate?.toString() ?? '',
-    );
+    _rateCtrl = TextEditingController(text: p?.hourlyRate?.toString() ?? '');
     _color = p != null ? _parseHexColor(p.color) : _presetColors.first;
   }
 
@@ -262,7 +266,7 @@ class _ProjectEditorSheetState extends ConsumerState<_ProjectEditorSheet> {
               spacing: 12,
               runSpacing: 12,
               children: _presetColors.map((c) {
-                final selected = c.value == _color.value;
+                final selected = c.toARGB32() == _color.toARGB32();
                 return GestureDetector(
                   onTap: () => setState(() => _color = c),
                   child: Container(
@@ -279,8 +283,7 @@ class _ProjectEditorSheetState extends ConsumerState<_ProjectEditorSheet> {
                       ),
                     ),
                     child: selected
-                        ? Icon(Icons.check,
-                            color: _foregroundFor(c), size: 20)
+                        ? Icon(Icons.check, color: _foregroundFor(c), size: 20)
                         : null,
                   ),
                 );
@@ -289,8 +292,9 @@ class _ProjectEditorSheetState extends ConsumerState<_ProjectEditorSheet> {
             const SizedBox(height: 16),
             TextField(
               controller: _rateCtrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
+              keyboardType: const TextInputType.numberWithOptions(
+                decimal: true,
+              ),
               decoration: const InputDecoration(
                 labelText: 'Hourly rate (optional)',
                 border: OutlineInputBorder(),
@@ -344,7 +348,10 @@ class _ProjectEditorSheetState extends ConsumerState<_ProjectEditorSheet> {
 
     // Color → 6-char hex string (no #) to match TextColumn(min:6, max:7)
     final hexColor =
-        (_color.value & 0xFFFFFF).toRadixString(16).padLeft(6, '0').toUpperCase();
+        '#${(_color.toARGB32() & 0xFFFFFF)
+            .toRadixString(16)
+            .padLeft(6, '0')
+            .toUpperCase()}';
 
     final notifier = ref.read(projectListProvider.notifier);
 

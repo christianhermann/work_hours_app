@@ -25,6 +25,13 @@ class TimeEntryDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
+  Stream<List<TimeEntry>> watchEntriesForProject(int projectId) {
+    return (select(timeEntries)
+          ..where((tbl) => tbl.projectId.equals(projectId))
+          ..orderBy([(tbl) => OrderingTerm.desc(tbl.startTime)]))
+        .watch();
+  }
+
   Future<List<TimeEntry>> getEntriesForDateRange(
     DateTime start,
     DateTime end,
@@ -58,3 +65,4 @@ class TimeEntryDao extends DatabaseAccessor<AppDatabase>
         .watchSingleOrNull();
   }
 }
+
