@@ -38,6 +38,7 @@ dependencies:
   cupertino_icons: ^1.0.8
   path: ^1.9.1
   package_info_plus: ^10.1.0
+  shared_preferences: ^2.5.5
 
   # The following adds the Cupertino Icons font to your application.
   # Use with the CupertinoIcons class.

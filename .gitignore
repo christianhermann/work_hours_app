@@ -43,3 +43,10 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# One-time scaffolding scripts — not part of the app
+create_structure.bat
+setup_structure.py
+
+# Drift generated files — regenerate with: dart run build_runner build
+*.g.dart

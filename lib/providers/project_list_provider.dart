@@ -1,6 +1,7 @@
 // lib/providers/project_list_provider.dart
 
 import 'dart:async';
+import 'package:drift/drift.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/database.dart';
 import 'database_provider.dart';
@@ -32,6 +33,11 @@ class ProjectListNotifier extends AsyncNotifier<List<Project>> {
   }
 }
 
-final projectListProvider = AsyncNotifierProvider<ProjectListNotifier, List<Project>>(
-  ProjectListNotifier.new,
-);
+final projectListProvider = AsyncNotifierProvider<ProjectListNotifier, List<Project>>(ProjectListNotifier.new);
+
+final projectListStreamProvider = StreamProvider<List<Project>>((ref) {
+  final db = ref.watch(databaseProvider);
+  return (db.select(db.projects)
+        ..orderBy([(t) => OrderingTerm.asc(t.name)]))
+      .watch();
+});

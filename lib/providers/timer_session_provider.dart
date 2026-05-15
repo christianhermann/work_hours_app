@@ -21,15 +21,17 @@ class TimerSessionState {
 
   TimerSessionState copyWith({
     bool? isRunning,
-    DateTime? startTime,
+    Object? startTime = _sentinel,
     int? selectedProjectId,
   }) {
     return TimerSessionState(
       isRunning: isRunning ?? this.isRunning,
-      startTime: startTime ?? this.startTime,
+      startTime: startTime == _sentinel ? this.startTime : startTime as DateTime?,
       selectedProjectId: selectedProjectId ?? this.selectedProjectId,
     );
   }
+
+  static const _sentinel = Object();
 }
 
 class TimerSessionNotifier extends Notifier<TimerSessionState> {
@@ -45,7 +47,7 @@ class TimerSessionNotifier extends Notifier<TimerSessionState> {
   }
 
   void stopTimer() {
-    state = state.copyWith(isRunning: false);
+    state = state.copyWith(isRunning: false, startTime: null);
   }
 
   void resetTimer() {

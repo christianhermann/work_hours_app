@@ -49,4 +49,12 @@ class TimeEntryDao extends DatabaseAccessor<AppDatabase>
           ..limit(1))
         .getSingleOrNull();
   }
+
+  Stream<TimeEntry?> watchRunningEntry() {
+    return (select(timeEntries)
+          ..where((tbl) => tbl.endTime.isNull())
+          ..orderBy([(tbl) => OrderingTerm.desc(tbl.startTime)])
+          ..limit(1))
+        .watchSingleOrNull();
+  }
 }

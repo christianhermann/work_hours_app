@@ -7,8 +7,8 @@ class Projects extends Table {
 
   TextColumn get name => text().withLength(min: 1, max: 50)();
 
-  TextColumn get color => text().withLength(min: 6, max: 7)();
-
+  TextColumn get color => text().withLength(min: 7, max: 7)();
+  
   RealColumn get hourlyRate => real().nullable()();
 }
 

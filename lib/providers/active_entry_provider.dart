@@ -6,8 +6,5 @@ import 'database_provider.dart';
 
 final activeEntryProvider = StreamProvider<TimeEntry?>((ref) {
   final db = ref.watch(databaseProvider);
-
-  return (db.select(db.timeEntries)
-        ..where((t) => t.endTime.isNull()))
-      .watchSingleOrNull();
+  return db.timeEntryDao.watchRunningEntry();
 });

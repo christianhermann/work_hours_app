@@ -10,12 +10,24 @@ final weekEntriesProvider = StreamProvider<List<TimeEntry>>((ref) {
   final now = DateTime.now();
   final startOfToday = DateTime(now.year, now.month, now.day);
   // Monday of the current week
-  final startOfWeek = startOfToday.subtract(Duration(days: startOfToday.weekday - 1));
+  final startOfWeek = startOfToday.subtract(
+    Duration(days: startOfToday.weekday - 1),
+  );
   final endOfWeek = startOfWeek.add(const Duration(days: 7));
 
   return (db.select(db.timeEntries)
-        ..where((t) => t.startTime.isBiggerOrEqualValue(startOfWeek.millisecondsSinceEpoch))
-        ..where((t) => t.startTime.isSmallerThanValue(endOfWeek.millisecondsSinceEpoch))
-        ..orderBy([(t) => OrderingTerm(expression: t.startTime, mode: OrderingMode.desc)]))
+        ..where(
+          (t) => t.startTime.isBiggerOrEqualValue(
+            startOfWeek.toUtc().millisecondsSinceEpoch,
+          ),
+        )
+        ..where(
+          (t) => t.startTime.isSmallerThanValue(
+            endOfWeek.toUtc().millisecondsSinceEpoch,
+          ),
+        )
+        ..orderBy([
+          (t) => OrderingTerm(expression: t.startTime, mode: OrderingMode.desc),
+        ]))
       .watch();
 });

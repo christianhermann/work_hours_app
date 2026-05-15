@@ -1,7 +1,6 @@
 // lib/database/database.dart
 import 'package:drift/drift.dart';
 import 'package:drift_flutter/drift_flutter.dart';
-import 'package:path_provider/path_provider.dart';
 
 part 'tables.dart';
 part 'daos/project_dao.dart';
@@ -13,17 +12,25 @@ part 'database.g.dart';
   daos: [ProjectDao, TimeEntryDao],
 )
 class AppDatabase extends _$AppDatabase {
-  AppDatabase([QueryExecutor? executor]) : super(executor ?? _openConnection());
+  /// Always constructed with an explicit executor (injected via databaseProvider).
+  AppDatabase(super.executor);
 
   @override
   int get schemaVersion => 1;
 
-  static QueryExecutor _openConnection() {
-    return driftDatabase(
-      name: 'work_hours.sqlite',
-      native: const DriftNativeOptions(
-        databaseDirectory: getApplicationSupportDirectory,
-      ),
-    );
-  }
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+    onCreate: (m) => m.createAll(),
+    onUpgrade: (m, from, to) async {
+      // Add future migration steps here as schemaVersion increases.
+      // Example for v2:
+      // if (from < 2) {
+      //   await m.addColumn(timeEntries, timeEntries.someNewColumn);
+      // }
+    },
+    beforeOpen: (details) async {
+      // Enforce FK constraints on every connection (SQLite disables them by default).
+      await customStatement('PRAGMA foreign_keys = ON');
+    },
+  );
 }
