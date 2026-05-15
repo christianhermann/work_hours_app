@@ -11,25 +11,27 @@ import '../providers/database_provider.dart';
 // ─── Provider: raw entries per project ───────────────────────────────────────
 
 final _projectEntriesProvider =
-    FutureProvider.family<List<TimeEntry>, int>((ref, projectId) async {
+    StreamProvider.family<List<TimeEntry>, int>((ref, projectId) {
   final db = ref.watch(databaseProvider);
-  return db.timeEntryDao.getEntriesForProject(projectId);
+  return db.timeEntryDao.watchEntriesForProject(projectId); // uses the new stream
 });
 
+// _projectStatsProvider now reads from the stream provider
 final _projectStatsProvider =
-    FutureProvider.family<({int entryCount, double totalHours}), int>(
-  (ref, projectId) async {
-    final entries =
-        await ref.watch(_projectEntriesProvider(projectId).future);
-    final completed = entries.where((e) => e.endTime != null).toList();
-    double totalMs = 0;
-    for (final e in completed) {
-      totalMs += (e.endTime! - e.startTime).toDouble();
+    StreamProvider.family<({int entryCount, double totalHours}), int>(
+  (ref, projectId) async* {
+    final entriesStream = ref.watch(_projectEntriesProvider(projectId).stream);
+    await for (final entries in entriesStream) {
+      final completed = entries.where((e) => e.endTime != null).toList();
+      double totalMs = 0;
+      for (final e in completed) {
+        totalMs += (e.endTime! - e.startTime).toDouble();
+      }
+      yield (
+        entryCount: completed.length,
+        totalHours: totalMs / (1000 * 60 * 60),
+      );
     }
-    return (
-      entryCount: completed.length,
-      totalHours: totalMs / (1000 * 60 * 60),
-    );
   },
 );
 
@@ -182,7 +184,7 @@ class _MeasurementsSheet extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final color = _parseHexColor(project.color);
-    final entriesAsync = ref.watch(_projectEntriesProvider(project.id));
+    final entriesAsync = ref.watch(_projectEntriesProvider(project.id)); // same call, works with StreamProvider too
 
     return DraggableScrollableSheet(
       expand: false,
@@ -314,7 +316,7 @@ class _MeasurementTile extends StatelessWidget {
                 context: context,
                 builder: (_) => _EditEntryDialog(entry: entry),
               );
-              onChanged();
+              onChanged: () {}; // stream auto-updates; no manual refresh needed
             },
           ),
           IconButton(

@@ -25,6 +25,7 @@ class TimeEntryDao extends DatabaseAccessor<AppDatabase>
         .get();
   }
 
+  // ← NEW: reactive version used by the projects screen
   Stream<List<TimeEntry>> watchEntriesForProject(int projectId) {
     return (select(timeEntries)
           ..where((tbl) => tbl.projectId.equals(projectId))
@@ -65,4 +66,3 @@ class TimeEntryDao extends DatabaseAccessor<AppDatabase>
         .watchSingleOrNull();
   }
 }
-
