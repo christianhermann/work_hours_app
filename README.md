@@ -15,7 +15,7 @@ A personal, offline-first Flutter app for tracking work hours across multiple pr
 
 | Layer | Technology |
 |---|---|
-| Framework | Flutter (Dart SDK `^3.11.5`) |
+| Framework | Flutter (Dart SDK) `^3.11.5` |
 | Database | [Drift](https://drift.simonbinder.eu/) (SQLite) `^2.33.0` |
 | State Management | [flutter_riverpod](https://riverpod.dev/) `^2.3.0` |
 | Persistence | [path_provider](https://pub.dev/packages/path_provider) `^2.1.5` |
@@ -88,4 +88,5 @@ flutter build apk --release
 
 ## License
 
-Private utility app — not published to pub.dev.
+Private utility app — Feel free to do with it whatever you want. 
+Also note that this app was heavily vibe coded.
